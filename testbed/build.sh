@@ -10,19 +10,19 @@ if [[ ! -d "src" ]]; then
   exit 1
 fi
 
-c_files=()
+cpp_files=()
 while IFS= read -r -d '' file; do
-  c_files+=("$file")
-done < <(find "src" -type f -name '*.c' -print0 | sort -z)
+  cpp_files+=("$file")
+done < <(find "src" -type f -name '*.cpp' -print0 | sort -z)
 
-if (( ${#c_files[@]} == 0 )); then
-  echo "No C source files found under src."
+if (( ${#cpp_files[@]} == 0 )); then
+  echo "No C++ source files found under src."
   exit 1
 fi
 
 mkdir -p "../bin"
 
-compiler="${CC:-clang}"
+compiler="${CXX:-clang++}"
 assembly="testbed"
 output="../bin/${assembly}"
 
@@ -45,5 +45,5 @@ case "$(uname -s)" in
 esac
 
 echo "Building ${assembly}..."
-"$compiler" "${c_files[@]}" "${compiler_flags[@]}" -o "$output" "${defines[@]}" "${include_flags[@]}" "${linker_flags[@]}"
+"$compiler" "${cpp_files[@]}" "${compiler_flags[@]}" -o "$output" "${defines[@]}" "${include_flags[@]}" "${linker_flags[@]}"
 echo "Build succeeded: $output"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defines.h"
+#include "defines.hpp"
 
 #define LOG_WARN_ENABLED 1
 #define LOG_INFO_ENABLED 1
@@ -13,33 +13,31 @@
 #define LOG_TRACE_ENABLED 0
 #endif
 
-typedef enum log_level {
-    LOG_LEVEL_FATAL = 0,
-    LOG_LEVEL_ERROR = 1,
-    LOG_LEVEL_WARN = 2,
-    LOG_LEVEL_INFO = 3,
-    LOG_LEVEL_DEBUG = 4,
-    LOG_LEVEL_TRACE = 5
-} log_level;
+enum class LogLevel : u8 {
+    Fatal = 0,
+    Error = 1,
+    Warn = 2,
+    Info = 3,
+    Debug = 4,
+    Trace = 5
+};
 
-b8 initialize_logging();
-void shutdown_logging();
+bool InitialiseLogging();
+void ShutdownLogging();
 
-KAPI void log_output(log_level level, const char* message, ...);
+KAPI void LogOutput(LogLevel level, const char* message, ...);
 
 // Logs a fatal-level message.
-#define KFATAL(message, ...) \
-    log_output(LOG_LEVEL_FATAL, message, ##__VA_ARGS__);
+#define KFATAL(message, ...) LogOutput(LogLevel::Fatal, message, ##__VA_ARGS__);
 
 #ifndef KERROR
 // Logs an error-level message.
-#define KERROR(message, ...) \
-    log_output(LOG_LEVEL_ERROR, message, ##__VA_ARGS__);
+#define KERROR(message, ...) LogOutput(LogLevel::Error, message, ##__VA_ARGS__);
 #endif
 
 #if LOG_WARN_ENABLED == 1
 // Logs a warning-level message.
-#define KWARN(message, ...) log_output(LOG_LEVEL_WARN, message, ##__VA_ARGS__);
+#define KWARN(message, ...) LogOutput(LogLevel::Warn, message, ##__VA_ARGS__);
 #else
 // Does nothing when LOG_WARN_ENABLED != 1
 #define KWARN(message, ...)
@@ -47,7 +45,7 @@ KAPI void log_output(log_level level, const char* message, ...);
 
 #if LOG_INFO_ENABLED == 1
 // Logs a info-level message.
-#define KINFO(message, ...) log_output(LOG_LEVEL_INFO, message, ##__VA_ARGS__);
+#define KINFO(message, ...) LogOutput(LogLevel::Info, message, ##__VA_ARGS__);
 #else
 // Does nothing when LOG_INFO_ENABLED != 1
 #define KINFO(message, ...)
@@ -55,8 +53,7 @@ KAPI void log_output(log_level level, const char* message, ...);
 
 #if LOG_DEBUG_ENABLED == 1
 // Logs a debug-level message.
-#define KDEBUG(message, ...) \
-    log_output(LOG_LEVEL_DEBUG, message, ##__VA_ARGS__);
+#define KDEBUG(message, ...) LogOutput(LogLevel::Debug, message, ##__VA_ARGS__);
 #else
 // Does nothing when LOG_DEBUG_ENABLED != 1
 #define KDEBUG(message, ...)
@@ -64,8 +61,7 @@ KAPI void log_output(log_level level, const char* message, ...);
 
 #if LOG_TRACE_ENABLED == 1
 // Logs a trace-level message.
-#define KTRACE(message, ...) \
-    log_output(LOG_LEVEL_TRACE, message, ##__VA_ARGS__);
+#define KTRACE(message, ...) LogOutput(LogLevel::Trace, message, ##__VA_ARGS__);
 #else
 // Does nothing when LOG_TRACE_ENABLED != 1
 #define KTRACE(message, ...)

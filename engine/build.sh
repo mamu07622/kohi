@@ -31,19 +31,19 @@ if [[ ! -d "src" ]]; then
   exit 1
 fi
 
-c_files=()
+source_files=()
 while IFS= read -r -d '' file; do
-  c_files+=("$file")
-done < <(find "src" -type f -name '*.c' -print0 | sort -z)
+  source_files+=("$file")
+done < <(find "src" -type f -name '*.cpp' -print0 | sort -z)
 
-if (( ${#c_files[@]} == 0 )); then
-  echo "No C source files found under src."
+if (( ${#source_files[@]} == 0 )); then
+  echo "No C++ source files found under src."
   exit 1
 fi
 
 mkdir -p "../bin"
 
-compiler="${CC:-clang}"
+compiler="${CXX:-clang++}"
 assembly="engine"
 output="../bin/lib${assembly}.so"
 
@@ -57,6 +57,7 @@ case "$(uname -s)" in
     output="../bin/lib${assembly}.dylib"
     linker_flags+=(-Wl,-install_name,@rpath/lib${assembly}.dylib)
     linker_flags+=(-Wl,-rpath,"${VULKAN_SDK}/lib")
+    linker_flags+=(-framework Cocoa)
     ;;
   Linux)
     output="../bin/lib${assembly}.so"
@@ -68,5 +69,5 @@ case "$(uname -s)" in
 esac
 
 echo "Building ${assembly}..."
-"$compiler" "${c_files[@]}" "${compiler_flags[@]}" -o "$output" "${defines[@]}" "${include_flags[@]}" "${linker_flags[@]}"
+"$compiler" "${source_files[@]}" "${compiler_flags[@]}" -o "$output" "${defines[@]}" "${include_flags[@]}" "${linker_flags[@]}"
 echo "Build succeeded: $output"
