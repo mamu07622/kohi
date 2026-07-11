@@ -15,16 +15,16 @@
             "environment": []
         },
         {
-            "name": "(Mac) Launch",
-            "type": "cppdbg",
+            "name": "(Mac) Launch (CodeLLDB)",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceFolder}/bin/testbed",
             "args": [],
-            "stopAtEntry": false,
+            "stopOnEntry": false,
             "cwd": "${workspaceFolder}/bin/",
-            "environment": [],
-            "MIMode": "lldb"
-        },
+            "env": {},
+            "preLaunchTask": "Build Everything"
+        }
         {
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
