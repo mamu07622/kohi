@@ -1,5 +1,6 @@
 #include "application.hpp"
 
+#include "containers/darray.h"
 #include "game-types.hpp"
 #include "kmemory.hpp"
 #include "logger.hpp"
@@ -67,7 +68,18 @@ bool ApplicationCreate(Game& game) {
 }
 
 bool ApplicationRun() {
+    auto* darrayTest {DArrayCreate<i32>()};
+    DArrayPush(darrayTest, 42);
+
+    i32 poppedValue {0};
+    DArrayPop(darrayTest, &poppedValue);
+
+    KINFO("DArray test: length=%llu, value=%d", DArrayLength(darrayTest),
+          poppedValue);
+          
     KINFO(GetMemoryUsageString());
+          
+    DArrayDestroy(darrayTest);
 
     while (sApplicationState.IsApplicationRunning) {
         if (!PlatformPollMessages(sApplicationState.Platform)) {
@@ -83,7 +95,7 @@ bool ApplicationRun() {
             }
 
             if (!sApplicationState.GameInstance->Render(
-                    * sApplicationState.GameInstance, (f32)0)) {
+                    *sApplicationState.GameInstance, (f32)0)) {
                 KFATAL("Game render failed, shutting down.");
                 sApplicationState.IsApplicationRunning = false;
                 break;
