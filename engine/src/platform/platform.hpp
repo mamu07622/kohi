@@ -6,11 +6,10 @@ struct PlatformState {
     void* internalState;
 };
 
-KAPI bool PlatformStartup(PlatformState* platformState,
-                          const char* applicationName, i32 x, i32 y, i32 width,
-                          i32 height);
+bool PlatformStartup(PlatformState* platformState, const char* applicationName,
+                     i32 x, i32 y, i32 width, i32 height);
 
-KAPI void PlatformShutdown(PlatformState* platformState);
+void PlatformShutdown(PlatformState* platformState);
 
 bool PlatformPollMessages(PlatformState* platformState);
 
