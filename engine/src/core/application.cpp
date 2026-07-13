@@ -20,6 +20,26 @@ struct ApplicationState {
 static bool sInitialised {false};
 static ApplicationState sApplicationState;
 
+namespace {
+
+constexpr u16 EventSmokeCode {1000};
+
+bool OnEventSmoke(u16 code, void* sender, void* listenerInst,
+                  EventContext context) {
+    (void)sender;
+
+    if (!listenerInst) {
+        return false;
+    }
+
+    auto* callbackHandled {static_cast<bool*>(listenerInst)};
+    *callbackHandled = (code == EventSmokeCode && context.data.i32[0] == 123);
+
+    return *callbackHandled;
+}
+
+}  // namespace
+
 bool ApplicationCreate(Game& game) {
     if (sInitialised) {
         KERROR("ApplicationCreate() called more than once.")
@@ -36,8 +56,6 @@ bool ApplicationCreate(Game& game) {
     KERROR("A test message: %f", 3.14f);
     KWARN("A test message: %f", 3.14f);
     KINFO("A test message: %f", 3.14f);
-    KDEBUG("A test message: %f", 3.14f);
-    KTRACE("A test message: %f", 3.14f);
 
     sApplicationState.IsApplicationRunning = true;
     sApplicationState.IsApplicationSuspended = false;
@@ -84,6 +102,25 @@ bool ApplicationRun() {
 
     KINFO("DArray test: length=%llu, value=%d", DArrayLength(darrayTest),
           poppedValue);
+
+    // EventSystem smoke test.
+    bool callbackHandled {false};
+    EventContext eventContext {};
+    eventContext.data.i32[0] = 123;
+
+    const bool registerSuccess {
+        EventRegister(EventSmokeCode, &callbackHandled, OnEventSmoke)};
+    bool fireHandled {false};
+    bool unregisterSuccess {false};
+
+    if (registerSuccess) {
+        fireHandled = EventFire(EventSmokeCode, nullptr, eventContext);
+        unregisterSuccess =
+            EventUnregister(EventSmokeCode, &callbackHandled, OnEventSmoke);
+    }
+
+    KINFO("EventSystem test: register=%d, fired=%d, callback=%d, unregister=%d",
+          registerSuccess, fireHandled, callbackHandled, unregisterSuccess);
 
     KINFO(GetMemoryUsageString());
 
