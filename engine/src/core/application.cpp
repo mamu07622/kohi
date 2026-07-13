@@ -1,6 +1,7 @@
 #include "application.hpp"
 
 #include "containers/darray.h"
+#include "event.h"
 #include "game-types.hpp"
 #include "kmemory.hpp"
 #include "logger.hpp"
@@ -41,6 +42,12 @@ bool ApplicationCreate(Game& game) {
     sApplicationState.IsApplicationRunning = true;
     sApplicationState.IsApplicationSuspended = false;
 
+    if (!EventInitialise()) {
+        KERROR(
+            "Event system failed initialization. Application cannot continue.");
+        return false;
+    }
+
     ApplicationConfiguration& appConfig {game.ApplicationConfiguration};
 
     bool platformStartupSuccess {PlatformStartup(
@@ -68,17 +75,18 @@ bool ApplicationCreate(Game& game) {
 }
 
 bool ApplicationRun() {
+    // DArray Test
     auto* darrayTest {DArrayCreate<i32>()};
     DArrayPush(darrayTest, 42);
 
-    i32 poppedValue {0};
+    i32 poppedValue {};
     DArrayPop(darrayTest, &poppedValue);
 
     KINFO("DArray test: length=%llu, value=%d", DArrayLength(darrayTest),
           poppedValue);
-          
+
     KINFO(GetMemoryUsageString());
-          
+
     DArrayDestroy(darrayTest);
 
     while (sApplicationState.IsApplicationRunning) {
@@ -104,6 +112,8 @@ bool ApplicationRun() {
     }
 
     sApplicationState.IsApplicationRunning = false;
+
+    ShutdownEvent();
 
     PlatformShutdown(sApplicationState.Platform);
 
