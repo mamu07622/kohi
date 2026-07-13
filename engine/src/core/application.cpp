@@ -1,6 +1,7 @@
 #include "application.hpp"
 
 #include "game-types.hpp"
+#include "kmemory.hpp"
 #include "logger.hpp"
 #include "platform/platform.hpp"
 
@@ -66,6 +67,8 @@ bool ApplicationCreate(Game& game) {
 }
 
 bool ApplicationRun() {
+    KINFO(GetMemoryUsageString());
+
     while (sApplicationState.IsApplicationRunning) {
         if (!PlatformPollMessages(sApplicationState.Platform)) {
             sApplicationState.IsApplicationRunning = false;
@@ -80,7 +83,7 @@ bool ApplicationRun() {
             }
 
             if (!sApplicationState.GameInstance->Render(
-                    *sApplicationState.GameInstance, (f32)0)) {
+                    * sApplicationState.GameInstance, (f32)0)) {
                 KFATAL("Game render failed, shutting down.");
                 sApplicationState.IsApplicationRunning = false;
                 break;

@@ -2,8 +2,7 @@
 
 #include "game.h"
 
-// TODO: Remove this
-#include <platform/platform.hpp>
+#include <core/kmemory.hpp>
 
 // Define the function to create a game.
 bool CreateGame(Game& game) {
@@ -20,7 +19,7 @@ bool CreateGame(Game& game) {
     game.OnResize = GameOnResize;
 
     // Create the game state.
-    game.State = PlatformAllocate(sizeof(GameState), false);
+    game.State = KAllocate(sizeof(GameState), MemoryTag::GAME);
 
     return true;
 }

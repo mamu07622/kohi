@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/application.hpp"
+#include "core/kmemory.hpp"
 #include "core/logger.hpp"
 #include "game-types.hpp"
 
@@ -9,6 +10,8 @@ extern bool CreateGame(Game& game);
 
 // The main entry point of the application.
 int main(void) {
+    InitialiseMemory();
+
     // Request the game instance from the application.
     Game game {};
     
@@ -34,6 +37,8 @@ int main(void) {
         KINFO("Application did not shutdown gracefully.");
         return 2;
     }
+
+    ShutdownMemory();
 
     return 0;
 }

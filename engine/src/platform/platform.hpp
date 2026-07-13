@@ -13,8 +13,8 @@ void PlatformShutdown(PlatformState& platformState);
 
 bool PlatformPollMessages(PlatformState& platformState);
 
-void* PlatformAllocate(u64 size, bool aligned);
-void PlatformFree(void* block, bool aligned);
+void* PlatformAllocate(u64 size, bool aligned = false);
+void PlatformFree(void* block, bool aligned = false);
 void* PlatformZeroMemory(void* block, u64 size);
 void* PlatformCopyMemory(void* destination, const void* source, u64 size);
 void* PlatformSetMemory(void* destination, const i32 value, u64 size);
