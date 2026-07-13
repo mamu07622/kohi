@@ -11,13 +11,14 @@ extern bool CreateGame(Game& game);
 int main(void) {
     // Request the game instance from the application.
     Game game {};
+    
     if (!CreateGame(game)) {
         KFATAL("Could not create game!");
         return -1;
     }
 
     // Ensure the function pointers exist.
-    if (!game.render || !game.update || !game.initialise || !game.onResize) {
+    if (!game.Render || !game.Update || !game.Initialise || !game.OnResize) {
         KFATAL("The game's function pointers must be assigned!");
         return -2;
     }

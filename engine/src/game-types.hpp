@@ -6,20 +6,20 @@
 // application.
 struct Game {
     // The application configuration.
-    ApplicationConfiguration applicationConfiguration;
+    ApplicationConfiguration ApplicationConfiguration;
 
     // Function pointer to game's initialise function.
-    bool (*initialise)(Game& game);
+    bool (*Initialise)(Game& game);
 
     // Function pointer to game's update function.
-    bool (*update)(Game& game, f32 deltaTime);
+    bool (*Update)(Game& game, f32 deltaTime);
 
     // Function pointer to game's render function.
-    bool (*render)(Game& game, f32 deltaTime);
+    bool (*Render)(Game& game, f32 deltaTime);
 
     // Function pointer to handle resizes, if applicable.
-    void (*onResize)(Game& game, u32 width, u32 height);
+    void (*OnResize)(Game& game, u32 width, u32 height);
 
     // Game-specific game state. Created and managed by game.
-    void* state;
+    void* State;
 };

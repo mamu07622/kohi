@@ -7,16 +7,16 @@ struct Game;
 // Application configuration.
 struct ApplicationConfiguration {
     // Window starting position X axis, if applicable.
-    i16 startPositionX;
+    i16 StartPositionX;
 
     // Window starting position Y axis, if applicable.
-    i16 startPositionY;
+    i16 StartPositionY;
 
     // Window starting width, if applicable.
-    i16 startWidth;
+    i16 StartWidth;
 
     // Window starting height, if applicable.
-    i16 startHeight;
+    i16 StartHeight;
 
     // The application name using in windowing, if applicable.
     const char* name;

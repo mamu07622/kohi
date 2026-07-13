@@ -5,25 +5,25 @@
 #include "platform/platform.hpp"
 
 struct ApplicationState {
-    Game* gameInstance;
-    bool isRunning;
-    bool isSuspended;
-    PlatformState platform;
-    i16 width;
-    i16 height;
-    f64 lastTime;
+    Game* GameInstance;
+    bool IsApplicationRunning;
+    bool IsApplicationSuspended;
+    PlatformState Platform;
+    i16 WindowWidth;
+    i16 WindowHeight;
+    f64 PreviousFrameTime;
 };
 
-static bool initialised {false};
-static ApplicationState appState {};
+static bool sInitialised {false};
+static ApplicationState sApplicationState;
 
 bool ApplicationCreate(Game& game) {
-    if (initialised) {
+    if (sInitialised) {
         KERROR("ApplicationCreate() called more than once.")
         return false;
     }
 
-    appState.gameInstance = &game;
+    sApplicationState.GameInstance = &game;
 
     // Initialise subsystems.
     InitialiseLogging();
@@ -36,58 +36,61 @@ bool ApplicationCreate(Game& game) {
     KDEBUG("A test message: %f", 3.14f);
     KTRACE("A test message: %f", 3.14f);
 
-    appState.isRunning = true;
-    appState.isSuspended = false;
+    sApplicationState.IsApplicationRunning = true;
+    sApplicationState.IsApplicationSuspended = false;
 
-    bool platformStartupSuccess {
-        PlatformStartup(&appState.platform, game.applicationConfiguration.name,
-                        game.applicationConfiguration.startPositionX,
-                        game.applicationConfiguration.startPositionY,
-                        game.applicationConfiguration.startWidth,
-                        game.applicationConfiguration.startHeight)};
+    ApplicationConfiguration& appConfig {game.ApplicationConfiguration};
+
+    bool platformStartupSuccess {PlatformStartup(
+        sApplicationState.Platform, appConfig.name, appConfig.StartPositionX,
+        appConfig.StartPositionY, appConfig.StartWidth, appConfig.StartHeight)};
 
     if (!platformStartupSuccess) {
         return false;
     }
 
     // Initialise the game.
-    if (!appState.gameInstance->initialise(*appState.gameInstance)) {
+    if (!sApplicationState.GameInstance->Initialise(
+            *sApplicationState.GameInstance)) {
         KFATAL("Game failed to initialise");
         return false;
     }
 
-    appState.gameInstance->onResize(*appState.gameInstance, appState.width,
-                                    appState.height);
+    sApplicationState.GameInstance->OnResize(*sApplicationState.GameInstance,
+                                             sApplicationState.WindowWidth,
+                                             sApplicationState.WindowHeight);
 
-    initialised = true;
+    sInitialised = true;
 
     return true;
 }
 
 bool ApplicationRun() {
-    while (appState.isRunning) {
-        if (!PlatformPollMessages(&appState.platform)) {
-            appState.isRunning = false;
+    while (sApplicationState.IsApplicationRunning) {
+        if (!PlatformPollMessages(sApplicationState.Platform)) {
+            sApplicationState.IsApplicationRunning = false;
         }
 
-        if (!appState.isSuspended) {
-            if (!appState.gameInstance->update(*appState.gameInstance, (f32)0)) {
+        if (!sApplicationState.IsApplicationSuspended) {
+            if (!sApplicationState.GameInstance->Update(
+                    *sApplicationState.GameInstance, (f32)0)) {
                 KFATAL("Game update failed, shutting down.");
-                appState.isRunning = false;
+                sApplicationState.IsApplicationRunning = false;
                 break;
             }
 
-            if (!appState.gameInstance->render(*appState.gameInstance, (f32)0)) {
+            if (!sApplicationState.GameInstance->Render(
+                    *sApplicationState.GameInstance, (f32)0)) {
                 KFATAL("Game render failed, shutting down.");
-                appState.isRunning = false;
+                sApplicationState.IsApplicationRunning = false;
                 break;
             }
         }
     }
 
-    appState.isRunning = false;
+    sApplicationState.IsApplicationRunning = false;
 
-    PlatformShutdown(&appState.platform);
+    PlatformShutdown(sApplicationState.Platform);
 
     return true;
 }

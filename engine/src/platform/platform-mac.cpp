@@ -84,19 +84,15 @@ void WriteAnsiColour(FILE* stream, const char* message, const u8 colour) {
 
 }  // namespace
 
-bool PlatformStartup(PlatformState* platformState, const char* applicationName,
+bool PlatformStartup(PlatformState& platformState, const char* applicationName,
                      i32 x, i32 y, i32 width, i32 height) {
-    if (!platformState) {
-        return false;
-    }
-
     auto* state {
         static_cast<InternalState*>(std::malloc(sizeof(InternalState)))};
     if (!state) {
         return false;
     }
     std::memset(state, 0, sizeof(InternalState));
-    platformState->internalState = state;
+    platformState.InternalState = state;
 
     Class pool_class {
         reinterpret_cast<Class>(objc_getClass("NSAutoreleasePool"))};
@@ -148,12 +144,12 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
     return true;
 }
 
-void PlatformShutdown(PlatformState* platformState) {
-    if (!platformState || !platformState->internalState) {
+void PlatformShutdown(PlatformState& platformState) {
+    if (!platformState.InternalState) {
         return;
     }
 
-    auto* state {static_cast<InternalState*>(platformState->internalState)};
+    auto* state {static_cast<InternalState*>(platformState.InternalState)};
 
     if (state->window) {
         MsgSend<void (*)(id, SEL)>()(state->window, sel_registerName("close"));
@@ -167,15 +163,15 @@ void PlatformShutdown(PlatformState* platformState) {
     }
 
     std::free(state);
-    platformState->internalState = nullptr;
+    platformState.InternalState = nullptr;
 }
 
-bool PlatformPollMessages(PlatformState* platformState) {
-    if (!platformState || !platformState->internalState) {
+bool PlatformPollMessages(PlatformState& platformState) {
+    if (!platformState.InternalState) {
         return false;
     }
 
-    auto* state {static_cast<InternalState*>(platformState->internalState)};
+    auto* state {static_cast<InternalState*>(platformState.InternalState)};
     if (!state->app || !state->window) {
         return false;
     }
@@ -238,7 +234,7 @@ f64 PlatformGetAbsoluteTime() {
     using clock = std::chrono::steady_clock;
 
     const auto now {clock::now().time_since_epoch()};
-    
+
     return std::chrono::duration<f64>(now).count();
 }
 

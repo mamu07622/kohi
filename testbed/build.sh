@@ -26,7 +26,7 @@ compiler="${CXX:-clang++}"
 assembly="testbed"
 output="../bin/${assembly}"
 
-compiler_flags=(-g -Wall -Wextra)
+compiler_flags=(-std=c++23 -g -Wall -Wextra)
 defines=(-D_DEBUG -DKIMPORT)
 include_flags=(-Isrc -I../engine/src)
 linker_flags=(-L../bin -lengine)

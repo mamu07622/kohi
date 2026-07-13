@@ -47,7 +47,7 @@ compiler="${CXX:-clang++}"
 assembly="engine"
 output="../bin/lib${assembly}.so"
 
-compiler_flags=(-g -shared -Wvarargs -Wall -Werror)
+compiler_flags=(-std=c++23 -g -shared -Wvarargs -Wall -Werror)
 defines=(-D_DEBUG -DKEXPORT)
 include_flags=(-Isrc "-I${VULKAN_SDK}/include")
 linker_flags=("-L${VULKAN_SDK}/lib" -lvulkan)

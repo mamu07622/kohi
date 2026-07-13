@@ -3,15 +3,15 @@
 #include "defines.hpp"
 
 struct PlatformState {
-    void* internalState;
+    void* InternalState;
 };
 
-bool PlatformStartup(PlatformState* platformState, const char* applicationName,
+bool PlatformStartup(PlatformState& platformState, const char* applicationName,
                      i32 x, i32 y, i32 width, i32 height);
 
-void PlatformShutdown(PlatformState* platformState);
+void PlatformShutdown(PlatformState& platformState);
 
-bool PlatformPollMessages(PlatformState* platformState);
+bool PlatformPollMessages(PlatformState& platformState);
 
 void* PlatformAllocate(u64 size, bool aligned);
 void PlatformFree(void* block, bool aligned);

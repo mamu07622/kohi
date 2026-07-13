@@ -21,16 +21,16 @@ static LARGE_INTEGER startTime;
 LRESULT CALLBACK Win32ProcessMassage(HWND hwnd, u32 msg, WPARAM wparam,
                                      LPARAM lparam);
 
-bool PlatformStartup(PlatformState* platformState, const char* applicationName,
+bool PlatformStartup(PlatformState& platformState, const char* applicationName,
                      i32 x, i32 y, i32 width, i32 height) {
     platformState->internalState = malloc(sizeof(InternalState));
 
-    auto* state{static_cast<InternalState*>(platformState->internalState)};
+    auto* state {static_cast<InternalState*>(platformState->internalState)};
 
-    state->h_instance{GetModuleHandleA(0)};
+    state->h_instance {GetModuleHandleA(0)};
 
     // Setup and register window class.
-    WNDCLASSA wc{
+    WNDCLASSA wc {
         .style = CS_DBLCLKS,  // Get double-clicks
         .lpfnWndProc = win32_process_message,
         .cbClsExtra = 0,
@@ -49,22 +49,22 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
     }
 
     // Create window
-    u32 client_x{x};
-    u32 client_y{y};
-    u32 client_width{width};
-    u32 client_height{height};
+    u32 client_x {x};
+    u32 client_y {y};
+    u32 client_width {width};
+    u32 client_height {height};
 
-    u32 window_x{client_x};
-    u32 window_y{client_y};
-    u32 window_width{client_width};
-    u32 window_height{client_height};
+    u32 window_x {client_x};
+    u32 window_y {client_y};
+    u32 window_width {client_width};
+    u32 window_height {client_height};
 
-    u32 window_style{WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_MAXIMIZEBOX |
-                     WS_MINIMIZEBOX | WS_THICKFRAME};
-    u32 window_ex_style{WS_EX_APPWINDOW};
+    u32 window_style {WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_MAXIMIZEBOX |
+                      WS_MINIMIZEBOX | WS_THICKFRAME};
+    u32 window_ex_style {WS_EX_APPWINDOW};
 
     // Obtain the size of the border.
-    RECT border_rect{0, 0, 0, 0};
+    RECT border_rect {0, 0, 0, 0};
     AdjustWindowRectEx(&border_rect, window_style, 0, window_ex_style);
 
     // In this case, the border rectangle is negative.
@@ -75,10 +75,10 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
     window_width += border_rect.right - border_rect.left;
     window_height += border_rect.bottom - border_rect.top;
 
-    HWND handle{CreateWindowExA(window_ex_style, wc.lpszClassName,
-                                application_name, window_style, window_x,
-                                window_y, window_width, window_height, 0, 0,
-                                state->h_instance, 0)};
+    HWND handle {CreateWindowExA(window_ex_style, wc.lpszClassName,
+                                 application_name, window_style, window_x,
+                                 window_y, window_width, window_height, 0, 0,
+                                 state->h_instance, 0)};
 
     if (handle == 0) {
         MessageBoxA(NULL, "Window creation failed!", "Error!",
@@ -92,10 +92,10 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
     }
 
     // Show the window
-    bool shouldActivate{true};  // TODO: if the window should not accept input,
-                                // this should be false.
-    i32 show_window_command_flags{should_activate ? SW_SHOW
-                                                  : SW_SHOWNOACTIVATE};
+    bool shouldActivate {true};  // TODO: if the window should not accept input,
+                                 // this should be false.
+    i32 show_window_command_flags {should_activate ? SW_SHOW
+                                                   : SW_SHOWNOACTIVATE};
     // If initially minimized, use SW_MINIMIZE : SW_SHOWMINNOACTIVE;
     // If initially maximized, use SW_SHOWMAXIMIZED : SW_MAXIMIZE
     ShowWindow(state->hwnd, show_window_command_flags);
@@ -103,7 +103,7 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
     // Clock setup
     LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
-    clock_frequency{1.0 / (f64)frequency.QuadPart};
+    clock_frequency {1.0 / (f64)frequency.QuadPart};
     QueryPerformanceCounter(&startTime);
 
     return true;
@@ -111,7 +111,7 @@ bool PlatformStartup(PlatformState* platformState, const char* applicationName,
 
 void PlatformShutdown(PlatformState* platformState) {
     // Simply cold-cast to the known type.
-    auto* state{static_cast<InternalState*>(platformState->internalState)};
+    auto* state {static_cast<InternalState*>(platformState->internalState)};
 
     if (state->hwnd) {
         DestroyWindow(state->hwnd);
@@ -120,7 +120,7 @@ void PlatformShutdown(PlatformState* platformState) {
 }
 
 bool PlatformPollMessages(PlatformState* platformState) {
-    MSG message{};
+    MSG message {};
 
     while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE)) {
         TranslateMessage(&message);
@@ -165,7 +165,7 @@ void PlatformConsoleWriteError(const char* message, u8 colour) {
 f64 PlatformGetAbsoluteTime() {
     using clock {std::chrono::steady_clock};
 
-    const auto now{clock::now().time_since_epoch()};
+    const auto now {clock::now().time_since_epoch()};
 
     return std::chrono::duration<f64>(now).count();
 }
