@@ -3,6 +3,7 @@
 #include "containers/darray.h"
 #include "event.h"
 #include "game-types.hpp"
+#include "input.hpp"
 #include "kmemory.hpp"
 #include "logger.hpp"
 #include "platform/platform.hpp"
@@ -50,6 +51,7 @@ bool ApplicationCreate(Game& game) {
 
     // Initialise subsystems.
     InitialiseLogging();
+    InitialiseInput();
 
     // TODO: Remove this
     KFATAL("A test message: %f", 3.14f);
@@ -60,7 +62,7 @@ bool ApplicationCreate(Game& game) {
     sApplicationState.IsApplicationRunning = true;
     sApplicationState.IsApplicationSuspended = false;
 
-    if (!EventInitialise()) {
+    if (!InitialiseEvent()) {
         KERROR(
             "Event system failed initialization. Application cannot continue.");
         return false;
@@ -145,12 +147,19 @@ bool ApplicationRun() {
                 sApplicationState.IsApplicationRunning = false;
                 break;
             }
+
+            // NOTE: Input update/state copying should always be handled
+            // after any input should be recorded; I.E. before this line.
+            // As a safety, input is the last thing to be updated before
+            // this frame ends.
+            UpdateInput(0);
         }
     }
 
     sApplicationState.IsApplicationRunning = false;
 
     ShutdownEvent();
+    ShutdownInput();
 
     PlatformShutdown(sApplicationState.Platform);
 

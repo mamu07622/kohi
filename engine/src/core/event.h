@@ -27,9 +27,9 @@ static_assert(sizeof(EventContext) == 16, "EventContext must remain 16 bytes.");
 
 // Should return true if handled.
 using PFN_on_event = bool (*)(u16 code, void* sender, void* listenerInst,
-                            EventContext context);
+                              EventContext context);
 
-[[nodiscard]] bool EventInitialise();
+[[nodiscard]] bool InitialiseEvent();
 void ShutdownEvent();
 
 /**
@@ -43,7 +43,7 @@ void ShutdownEvent();
  * @returns TRUE if the event is successfully registered; otherwise false.
  */
 [[nodiscard]] KAPI bool EventRegister(u16 code, void* listener,
-                                    PFN_on_event onEvent);
+                                      PFN_on_event onEvent);
 
 /**
  * Unregister from listening for when events are sent with the provided code. If
@@ -54,7 +54,7 @@ void ShutdownEvent();
  * @returns TRUE if the event is successfully unregistered; otherwise false.
  */
 [[nodiscard]] KAPI bool EventUnregister(u16 code, void* listener,
-                                      PFN_on_event onEvent);
+                                        PFN_on_event onEvent);
 
 /**
  * Fires an event to listeners of the given code. If an event handler returns
@@ -65,7 +65,7 @@ void ShutdownEvent();
  * @param data The event data.
  * @returns TRUE if handled, otherwise FALSE.
  */
-[[nodiscard]] KAPI bool EventFire(u16 code, void* sender, EventContext context);
+KAPI bool EventFire(u16 code, void* sender, EventContext context);
 
 // System internal event codes. Application should use codes beyond 255.
 enum SystemEventCode : u16 {

@@ -29,7 +29,7 @@ struct EventSystemState {
 static bool sIsInitialised {false};
 static EventSystemState sEventState {};
 
-bool EventInitialise() {
+bool InitialiseEvent() {
     if (sIsInitialised) {
         return false;
     }
