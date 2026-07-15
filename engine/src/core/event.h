@@ -29,7 +29,7 @@ static_assert(sizeof(EventContext) == 16, "EventContext must remain 16 bytes.");
 using PFN_on_event = bool (*)(u16 code, void* sender, void* listenerInst,
                               EventContext context);
 
-[[nodiscard]] bool InitialiseEvent();
+bool InitialiseEvent();
 void ShutdownEvent();
 
 /**
@@ -42,8 +42,7 @@ void ShutdownEvent();
  * code is fired.
  * @returns TRUE if the event is successfully registered; otherwise false.
  */
-[[nodiscard]] KAPI bool EventRegister(u16 code, void* listener,
-                                      PFN_on_event onEvent);
+KAPI bool EventRegister(u16 code, void* listener, PFN_on_event onEvent);
 
 /**
  * Unregister from listening for when events are sent with the provided code. If
@@ -53,8 +52,7 @@ void ShutdownEvent();
  * @param on_event The callback function pointer to be unregistered.
  * @returns TRUE if the event is successfully unregistered; otherwise false.
  */
-[[nodiscard]] KAPI bool EventUnregister(u16 code, void* listener,
-                                        PFN_on_event onEvent);
+KAPI bool EventUnregister(u16 code, void* listener, PFN_on_event onEvent);
 
 /**
  * Fires an event to listeners of the given code. If an event handler returns
