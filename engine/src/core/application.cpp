@@ -1,12 +1,14 @@
 #include "application.hpp"
 
 #include "containers/darray.h"
+#include "core/clock.h"
 #include "event.h"
 #include "game-types.hpp"
 #include "input.hpp"
 #include "kmemory.hpp"
 #include "logger.hpp"
 #include "platform/platform.hpp"
+#include "renderer/renderer-frontend.hpp"
 
 struct ApplicationState {
     Game* GameInstance;
@@ -15,6 +17,7 @@ struct ApplicationState {
     PlatformState Platform;
     i16 WindowWidth;
     i16 WindowHeight;
+    Clock Clock;
     f64 PreviousFrameTime;
 };
 
@@ -22,30 +25,10 @@ static bool sInitialised {false};
 static ApplicationState sApplicationState;
 
 // Event handlers
-bool ApplicationOnEvent(u16 code, void* sender, void* listener,
+bool ApplicationOnEvent(SystemEventCode code, void* sender, void* listener,
                         EventContext context);
-bool ApplicationOnKey(u16 code, void* sender, void* listener,
+bool ApplicationOnKey(SystemEventCode code, void* sender, void* listener,
                       EventContext context);
-
-namespace {
-
-constexpr u16 EventSmokeCode {1000};
-
-bool OnEventSmoke(u16 code, void* sender, void* listenerInst,
-                  EventContext context) {
-    (void)sender;
-
-    if (!listenerInst) {
-        return false;
-    }
-
-    auto* callbackHandled {static_cast<bool*>(listenerInst)};
-    *callbackHandled = (code == EventSmokeCode && context.data.i32[0] == 123);
-
-    return *callbackHandled;
-}
-
-}  // namespace
 
 bool ApplicationCreate(Game& game) {
     if (sInitialised) {
@@ -81,15 +64,22 @@ bool ApplicationCreate(Game& game) {
 
     ApplicationConfiguration& appConfig {game.ApplicationConfiguration};
 
-    EventRegister(EVENT_CODE_APPLICATION_QUIT, nullptr, ApplicationOnEvent);
-    EventRegister(EVENT_CODE_KEY_PRESSED, nullptr, ApplicationOnKey);
-    EventRegister(EVENT_CODE_KEY_RELEASED, nullptr, ApplicationOnKey);
+    EventRegister(SystemEventCode::ApplicationQuit, nullptr,
+                  ApplicationOnEvent);
+    EventRegister(SystemEventCode::KeyPressed, nullptr, ApplicationOnKey);
+    EventRegister(SystemEventCode::KeyReleased, nullptr, ApplicationOnKey);
 
     bool platformStartupSuccess {PlatformStartup(
         sApplicationState.Platform, appConfig.name, appConfig.StartPositionX,
         appConfig.StartPositionY, appConfig.StartWidth, appConfig.StartHeight)};
 
     if (!platformStartupSuccess) {
+        return false;
+    }
+
+    // Renderer startup
+    if (!RendererInitialise(appConfig.name, sApplicationState.Platform)) {
+        KFATAL("Failed to initialize renderer. Aborting application.");
         return false;
     }
 
@@ -112,43 +102,14 @@ bool ApplicationCreate(Game& game) {
 }
 
 bool ApplicationRun() {
-    // DArray Test
-    auto* darrayTest {DArrayCreate<i32>()};
-    DArrayPush(darrayTest, 42);
-
-    i32 poppedValue {};
-    DArrayPop(darrayTest, &poppedValue);
-
-    KINFO(
-        "DArray test: length=%llu, "
-        "value=%d",
-        DArrayLength(darrayTest), poppedValue);
-
-    // EventSystem smoke test.
-    bool callbackHandled {false};
-    EventContext eventContext {};
-    eventContext.data.i32[0] = 123;
-
-    const bool registerSuccess {
-        EventRegister(EventSmokeCode, &callbackHandled, OnEventSmoke)};
-    bool fireHandled {false};
-    bool unregisterSuccess {false};
-
-    if (registerSuccess) {
-        fireHandled = EventFire(EventSmokeCode, nullptr, eventContext);
-        unregisterSuccess =
-            EventUnregister(EventSmokeCode, &callbackHandled, OnEventSmoke);
-    }
-
-    KINFO(
-        "EventSystem test: "
-        "register=%d, fired=%d, "
-        "callback=%d, unregister=%d",
-        registerSuccess, fireHandled, callbackHandled, unregisterSuccess);
+    ClockStart(sApplicationState.Clock);
+    ClockUpdate(sApplicationState.Clock);
+    sApplicationState.PreviousFrameTime = sApplicationState.Clock.Elapsed;
+    // f64 runningTime {};
+    // u8 frameCount {};
+    f64 targetFrameSeconds {1.0f / 60};
 
     KINFO(GetMemoryUsageString());
-
-    DArrayDestroy(darrayTest);
 
     while (sApplicationState.IsApplicationRunning) {
         if (!PlatformPollMessages(sApplicationState.Platform)) {
@@ -156,6 +117,12 @@ bool ApplicationRun() {
         }
 
         if (!sApplicationState.IsApplicationSuspended) {
+            // Update clock and get delta time.
+            ClockUpdate(sApplicationState.Clock);
+            f64 currentTime {sApplicationState.Clock.Elapsed};
+            f64 delta {currentTime - sApplicationState.PreviousFrameTime};
+            f64 frameStartTime {PlatformGetAbsoluteTime()};
+
             if (!sApplicationState.GameInstance->Update(
                     *sApplicationState.GameInstance, (f32)0)) {
                 KFATAL(
@@ -176,6 +143,28 @@ bool ApplicationRun() {
                 break;
             }
 
+            // TODO: refactor packet creation
+            RenderPacket packet {.deltaTime = static_cast<f32>(delta)};
+            RendererDrawFrame(packet);
+
+            // Figure out how long the frame took and, if below
+            f64 frameEndTime {PlatformGetAbsoluteTime()};
+            f64 frameElapsedTime {frameEndTime - frameStartTime};
+            // runningTime += frameElapsedTime;
+            f64 remainingSeconds {targetFrameSeconds - frameElapsedTime};
+
+            if (remainingSeconds > 0) {
+                u64 remainingMs {static_cast<u64>(remainingSeconds * 1000)};
+
+                // If there is time left, give it back to the OS.
+                bool limitFrames {false};
+                if (remainingMs > 0 && limitFrames) {
+                    PlatformSleep(remainingMs - 1);
+                }
+
+                // frameCount++;
+            }
+
             // NOTE: Input update/state
             // copying should always be
             // handled after any input
@@ -190,41 +179,48 @@ bool ApplicationRun() {
 
     sApplicationState.IsApplicationRunning = false;
 
-    EventUnregister(EVENT_CODE_APPLICATION_QUIT, nullptr, ApplicationOnEvent);
-    EventUnregister(EVENT_CODE_KEY_PRESSED, nullptr, ApplicationOnKey);
-    EventUnregister(EVENT_CODE_KEY_RELEASED, nullptr, ApplicationOnKey);
+    EventUnregister(SystemEventCode::ApplicationQuit, nullptr,
+                    ApplicationOnEvent);
+    EventUnregister(SystemEventCode::KeyPressed, nullptr, ApplicationOnKey);
+    EventUnregister(SystemEventCode::MouseButtonReleased, nullptr,
+                    ApplicationOnKey);
 
     ShutdownEvent();
     ShutdownInput();
+
+    RendererShutdown();
 
     PlatformShutdown(sApplicationState.Platform);
 
     return true;
 }
 
-bool ApplicationOnEvent(u16 code, void* sender, void* listener,
+bool ApplicationOnEvent(SystemEventCode code, void* sender, void* listener,
                         EventContext context) {
     switch (code) {
-        case EVENT_CODE_APPLICATION_QUIT: {
+        case SystemEventCode::ApplicationQuit: {
             KINFO("EVENT_CODE_APPLICATION_QUIT recieved, shutting down.\n");
             sApplicationState.IsApplicationRunning = false;
             return true;
+        }
+        default: {
+            return false;
         }
     }
 
     return false;
 }
 
-bool ApplicationOnKey(u16 code, void* sender, void* listener,
+bool ApplicationOnKey(SystemEventCode code, void* sender, void* listener,
                       EventContext context) {
-    if (code == EVENT_CODE_KEY_PRESSED) {
+    if (code == SystemEventCode::KeyPressed) {
         auto keyCode {static_cast<KeyboardButton>(context.data.u16[0])};
 
         if (keyCode == KeyboardButton::Escape) {
             // NOTE: Technically firing an event to itself, but there may be
             // other listeners.
             EventContext data {};
-            EventFire(EVENT_CODE_APPLICATION_QUIT, 0, data);
+            EventFire(SystemEventCode::KeyPressed, 0, data);
 
             // Block anything else from processing this.
             return true;
@@ -234,7 +230,7 @@ bool ApplicationOnKey(u16 code, void* sender, void* listener,
         } else {
             KDEBUG("'%c' key pressed in window.", keyCode);
         }
-    } else if (code == EVENT_CODE_KEY_RELEASED) {
+    } else if (code == SystemEventCode::KeyReleased) {
         auto keyCode {static_cast<KeyboardButton>(context.data.u16[0])};
 
         if (keyCode == KeyboardButton::B) {

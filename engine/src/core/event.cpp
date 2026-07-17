@@ -1,6 +1,7 @@
 #include "core/event.h"
 
 #include <array>
+#include <utility>
 
 #include "containers/darray.h"
 
@@ -53,20 +54,23 @@ void ShutdownEvent() {
     sIsInitialised = false;
 }
 
-bool EventRegister(u16 code, void* listener, PFN_on_event onEvent) {
+bool EventRegister(SystemEventCode code, void* listener, PFN_on_event onEvent) {
     if (!sIsInitialised) {
         return false;
     }
 
-    if (sEventState.Registered[code].Events == nullptr) {
-        sEventState.Registered[code].Events = DArrayCreate<RegisteredEvent>();
+    if (sEventState.Registered[std::to_underlying(code)].Events == nullptr) {
+        sEventState.Registered[std::to_underlying(code)].Events =
+            DArrayCreate<RegisteredEvent>();
     }
 
     const u64 registeredCount {
-        DArrayLength(sEventState.Registered[code].Events)};
+        DArrayLength(sEventState.Registered[std::to_underlying(code)].Events)};
 
     for (u64 i = 0; i < registeredCount; ++i) {
-        if (sEventState.Registered[code].Events[i].Listener == listener) {
+        if (sEventState.Registered[std::to_underlying(code)]
+                .Events[i]
+                .Listener == listener) {
             // TODO: warn
             return false;
         }
@@ -75,34 +79,38 @@ bool EventRegister(u16 code, void* listener, PFN_on_event onEvent) {
     // If at this point, no duplicate was found. Proceed with registration.
     const RegisteredEvent event {listener, onEvent};
 
-    DArrayPush(sEventState.Registered[code].Events, event);
+    DArrayPush(sEventState.Registered[std::to_underlying(code)].Events, event);
 
     return true;
 }
 
-bool EventUnregister(u16 code, void* listener, PFN_on_event onEvent) {
+bool EventUnregister(SystemEventCode code, void* listener,
+                     PFN_on_event onEvent) {
     if (!sIsInitialised) {
         return false;
     }
 
     // On nothing is registered for the code, boot out.
-    if (sEventState.Registered[code].Events == nullptr) {
+    if (sEventState.Registered[std::to_underlying(code)].Events == nullptr) {
         // TODO: warn
         return false;
     }
 
     const u64 registeredCount {
-        DArrayLength(sEventState.Registered[code].Events)};
+        DArrayLength(sEventState.Registered[std::to_underlying(code)].Events)};
 
     for (u64 i = 0; i < registeredCount; ++i) {
-        const RegisteredEvent& event {sEventState.Registered[code].Events[i]};
+        const RegisteredEvent& event {
+            sEventState.Registered[std::to_underlying(code)].Events[i]};
 
         if (event.Listener == listener && event.Callback == onEvent) {
             // Found one, remove it
             RegisteredEvent poppedEvent {};
 
-            sEventState.Registered[code].Events = DArrayPopAt(
-                sEventState.Registered[code].Events, i, &poppedEvent);
+            sEventState.Registered[std::to_underlying(code)].Events =
+                DArrayPopAt(
+                    sEventState.Registered[std::to_underlying(code)].Events, i,
+                    &poppedEvent);
 
             return true;
         }
@@ -112,21 +120,22 @@ bool EventUnregister(u16 code, void* listener, PFN_on_event onEvent) {
     return false;
 }
 
-bool EventFire(u16 code, void* sender, EventContext context) {
+bool EventFire(SystemEventCode code, void* sender, EventContext context) {
     if (!sIsInitialised) {
         return false;
     }
 
     // If nothing is registered for the code, boot out.
-    if (sEventState.Registered[code].Events == nullptr) {
+    if (sEventState.Registered[std::to_underlying(code)].Events == nullptr) {
         return false;
     }
 
     const u64 registeredCount {
-        DArrayLength(sEventState.Registered[code].Events)};
+        DArrayLength(sEventState.Registered[std::to_underlying(code)].Events)};
 
     for (u64 i = 0; i < registeredCount; ++i) {
-        const RegisteredEvent& event {sEventState.Registered[code].Events[i]};
+        const RegisteredEvent& event {
+            sEventState.Registered[std::to_underlying(code)].Events[i]};
 
         if (event.Callback(code, sender, event.Listener, context)) {
             // Message has been handled, do not send to other listeners.

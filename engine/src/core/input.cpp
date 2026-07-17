@@ -100,8 +100,9 @@ void InputProcessKey(KeyboardButton key, bool pressed) {
     EventContext context {};
     context.data.u16[0] = std::to_underlying(key);
 
-    EventFire(pressed ? EVENT_CODE_KEY_PRESSED : EVENT_CODE_KEY_RELEASED,
-              nullptr, context);
+    EventFire(
+        pressed ? SystemEventCode::KeyPressed : SystemEventCode::KeyReleased,
+        nullptr, context);
 
     return;
 }
@@ -182,8 +183,9 @@ void InputProcessButton(MouseButton button, bool pressed) {
     EventContext context {};
     context.data.u16[0] = std::to_underlying(button);
 
-    EventFire(pressed ? EVENT_CODE_BUTTON_PRESSED : EVENT_CODE_BUTTON_RELEASED,
-              nullptr, context);
+    EventFire(
+        pressed ? SystemEventCode::KeyPressed : SystemEventCode::KeyReleased,
+        nullptr, context);
 
     return;
 }
@@ -206,7 +208,7 @@ void InputProcessMouseMove(i16 x, i16 y) {
     context.data.u16[0] = x;
     context.data.u16[1] = y;
 
-    EventFire(EVENT_CODE_MOUSE_MOVED, nullptr, context);
+    EventFire(SystemEventCode::MouseMoved, nullptr, context);
 
     return;
 }
@@ -216,7 +218,7 @@ void InputProcessMouseWheel(i8 zDelta) {
     EventContext context {};
     context.data.u8[0] = zDelta;
 
-    EventFire(EVENT_CODE_MOUSE_WHEEL, nullptr, context);
+    EventFire(SystemEventCode::MouseWheel, nullptr, context);
 
     return;
 }

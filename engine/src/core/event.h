@@ -2,6 +2,58 @@
 
 #include "defines.hpp"
 
+// System internal event codes. Application should use codes beyond 255.
+enum class SystemEventCode : u16 {
+    // Shuts the application down on the next frame.
+    ApplicationQuit = 0x01,
+
+    // Keyboard key pressed.
+    /* Context usage:
+     * u16 key_code = data.data.u16[0];
+     */
+    KeyPressed = 0x02,
+
+    // Keyboard key released.
+    /* Context usage:
+     * u16 key_code = data.data.u16[0];
+     */
+    KeyReleased = 0x03,
+
+    // Mouse button pressed.
+    /* Context usage:
+     * u16 button = data.data.u16[0];
+     */
+    MouseButtonPressed = 0x04,
+
+    // Mouse button released.
+    /* Context usage:
+     * u16 button = data.data.u16[0];
+     */
+    MouseButtonReleased = 0x05,
+
+    // Mouse moved.
+    /* Context usage:
+     * u16 x = data.data.u16[0];
+     * u16 y = data.data.u16[1];
+     */
+    MouseMoved = 0x06,
+
+    // Mouse moved.
+    /* Context usage:
+     * u8 z_delta = data.data.u8[0];
+     */
+    MouseWheel = 0x07,
+
+    // Resized/resolution changed from the OS.
+    /* Context usage:
+     * u16 width = data.data.u16[0];
+     * u16 height = data.data.u16[1];
+     */
+    WindowResized = 0x08,
+
+    _count = 0xFF
+};
+
 struct EventContext {
     // 16 bytes
     union {
@@ -26,8 +78,8 @@ struct EventContext {
 static_assert(sizeof(EventContext) == 16, "EventContext must remain 16 bytes.");
 
 // Should return true if handled.
-using PFN_on_event = bool (*)(u16 code, void* sender, void* listenerInst,
-                              EventContext context);
+using PFN_on_event = bool (*)(SystemEventCode code, void* sender,
+                              void* listenerInst, EventContext context);
 
 bool InitialiseEvent();
 void ShutdownEvent();
@@ -42,7 +94,8 @@ void ShutdownEvent();
  * code is fired.
  * @returns TRUE if the event is successfully registered; otherwise false.
  */
-KAPI bool EventRegister(u16 code, void* listener, PFN_on_event onEvent);
+KAPI bool EventRegister(SystemEventCode code, void* listener,
+                        PFN_on_event onEvent);
 
 /**
  * Unregister from listening for when events are sent with the provided code. If
@@ -52,7 +105,8 @@ KAPI bool EventRegister(u16 code, void* listener, PFN_on_event onEvent);
  * @param on_event The callback function pointer to be unregistered.
  * @returns TRUE if the event is successfully unregistered; otherwise false.
  */
-KAPI bool EventUnregister(u16 code, void* listener, PFN_on_event onEvent);
+KAPI bool EventUnregister(SystemEventCode code, void* listener,
+                          PFN_on_event onEvent);
 
 /**
  * Fires an event to listeners of the given code. If an event handler returns
@@ -63,58 +117,4 @@ KAPI bool EventUnregister(u16 code, void* listener, PFN_on_event onEvent);
  * @param data The event data.
  * @returns TRUE if handled, otherwise FALSE.
  */
-KAPI bool EventFire(u16 code, void* sender, EventContext context);
-
-// System internal event codes. Application should use codes beyond 255.
-enum SystemEventCode : u16 {
-    // Shuts the application down on the next frame.
-    EVENT_CODE_APPLICATION_QUIT = 0x01,
-
-    // Keyboard key pressed.
-    /* Context usage:
-     * u16 key_code = data.data.u16[0];
-     */
-    EVENT_CODE_KEY_PRESSED = 0x02,
-
-    // Keyboard key released.
-    /* Context usage:
-     * u16 key_code = data.data.u16[0];
-     */
-    EVENT_CODE_KEY_RELEASED = 0x03,
-
-    // Mouse button pressed.
-    /* Context usage:
-     * u16 button = data.data.u16[0];
-     */
-    EVENT_CODE_BUTTON_PRESSED = 0x04,
-
-    // Mouse button released.
-    /* Context usage:
-     * u16 button = data.data.u16[0];
-     */
-    EVENT_CODE_BUTTON_RELEASED = 0x05,
-
-    // Mouse moved.
-    /* Context usage:
-     * u16 x = data.data.u16[0];
-     * u16 y = data.data.u16[1];
-     */
-    EVENT_CODE_MOUSE_MOVED = 0x06,
-
-    // Mouse moved.
-    /* Context usage:
-     * u8 z_delta = data.data.u8[0];
-     */
-    EVENT_CODE_MOUSE_WHEEL = 0x07,
-
-    // Resized/resolution changed from the OS.
-    /* Context usage:
-     * u16 width = data.data.u16[0];
-     * u16 height = data.data.u16[1];
-     */
-    EVENT_CODE_RESIZED = 0x08,
-
-    MAX_EVENT_CODE = 0xFF
-};
-
-using system_event_code = SystemEventCode;
+KAPI bool EventFire(SystemEventCode code, void* sender, EventContext context);
